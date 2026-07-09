@@ -1,0 +1,44 @@
+version: "3.8"
+
+services:
+  postgres-source:
+    image: postgres:15
+    container_name: postgres-source
+    environment:
+      POSTGRES_DB: source_db
+      POSTGRES_USER: source_user
+      POSTGRES_PASSWORD: source_pass
+    volumes:
+      - ./init/source_init.sql:/docker-entrypoint-initdb.d/source_init.sql
+    ports:
+      - "5432:5432"
+
+  postgres-warehouse:
+    image: postgres:15
+    container_name: postgres-warehouse
+    environment:
+      POSTGRES_DB: warehouse
+      POSTGRES_USER: wh_user
+      POSTGRES_PASSWORD: wh_pass
+    ports:
+      - "5433:5432"
+
+  airflow:
+    image: apache/airflow:2.9.1
+    container_name: airflow
+    depends_on:
+      - postgres-source
+      - postgres-warehouse
+    environment:
+      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: sqlite:////opt/airflow/airflow.db
+      _PIP_ADDITIONAL_REQUIREMENTS: "psycopg2-binary pandas dbt-postgres"
+      SOURCE_DB_HOST: postgres-source
+      WAREHOUSE_DB_HOST: postgres-warehouse
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./dbt_warehouse:/opt/airflow/dbt_warehouse
+    ports:
+      - "8080:8080"
+    command: standalone
