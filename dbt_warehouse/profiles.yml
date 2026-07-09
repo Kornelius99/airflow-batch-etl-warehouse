@@ -1,0 +1,16 @@
+# dbt connection profile for this project. In this local/demo setup credentials
+# are plain (matching docker-compose.yml) - in a real project these would come
+# from environment variables / a secrets manager, never committed in plain text.
+
+dbt_warehouse:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: postgres-warehouse
+      user: wh_user
+      password: wh_pass
+      port: 5432
+      dbname: warehouse
+      schema: public
+      threads: 2
